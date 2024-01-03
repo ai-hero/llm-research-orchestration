@@ -102,7 +102,7 @@ def launch(container_image: str, config_file: str = "mmlu_peft.yaml", distribute
     print(f"Launched job name: {job_name}")
     print(f"1. To see status, run: kubectl describe job/{job_name}")
     print(f"2. To see logs, run: kubectl logs job/{job_name} -f")
-    print(f"3. To delete job and other artifacts, run: python launch.py delete {job_name}")
+    print(f"3. To delete job and other artifacts, run: python train.py delete {job_name}")
 
 
 def delete(job_name: str) -> None:
