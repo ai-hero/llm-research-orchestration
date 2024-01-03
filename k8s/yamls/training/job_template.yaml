@@ -17,8 +17,8 @@ spec:
         image: {{ container_image }}
         resources:
           limits:
-            memory: 32Gi
-            cpu: 8
+            memory: 64Gi
+            cpu: 16
             {% if num_gpu %}
             nvidia.com/gpu: {{ num_gpu }}
             {% else %}
