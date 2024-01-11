@@ -23,6 +23,22 @@ def b64encode_filter(s: str) -> str:
     return None
 
 
+def check_kubernetes_connection() -> None:
+    """Check if Kubernetes is connected."""
+    try:
+        # Run kubectl command to get cluster info
+        subprocess.run(["kubectl", "get", "po"], capture_output=True, text=True, check=True)
+
+        # If the command was successful, Kubernetes is connected
+        print("Kubernetes is connected.")
+    except subprocess.CalledProcessError as e:
+        # If there is an error, it means Kubernetes is not connected
+        print("Failed to connect to Kubernetes:\n------------------------------------")
+        print(e.stderr)
+        print("------------------------------------")
+        raise SystemExit(1)
+
+
 def launch(container_image: str, config_file: str = "mmlu_peft.yaml", distributed_config_file: str = "") -> None:
     """Launch a Kubernetes job for training a model."""
     job_name = codenamize(f"{config_file}-{time.time()}")
@@ -130,6 +146,7 @@ def delete(job_name: str) -> None:
 
 
 if __name__ == "__main__":
+    check_kubernetes_connection()
     Fire(
         {
             "launch": launch,

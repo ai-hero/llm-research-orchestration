@@ -48,7 +48,7 @@ Update [k8s/yamls/config.yaml](k8s/yamls/config.yaml) as needed for your job.
 ### Launch the Job
 ```sh
 cd k8s/
-python train.py launch rparundekar/fine_tune_research:20231209_01 mmlu_peft.yaml
+python train.py launch rparundekar/fine_tune_research:fbea00f mmlu_peft.yaml
 ```
 You'll see the name of the job. And instructions to see the logs and delete the job.
 NOTE: The container is created in the fine-tuning project.
@@ -56,7 +56,7 @@ NOTE: The container is created in the fine-tuning project.
 If launching with a distributed config
 ```sh
 cd k8s/
-python train.py launch rparundekar/fine_tune_research:20231209_01 distributed_default.yaml -d fsdp_single_worker.yaml
+python train.py launch rparundekar/fine_tune_research:fbea00f distributed_default.yaml -d fsdp_single_worker.yaml
 ```
 
 #### Deleting a Job
