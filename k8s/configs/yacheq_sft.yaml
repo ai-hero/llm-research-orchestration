@@ -14,6 +14,35 @@ model:
     type: "hf"
     name: "rparundekar/llama2-7b-yacheq"
 
+tokenizer:
+  additional_tokens:
+    - "<agent>"
+    - "</agent>"
+    - "<name>"
+    - "</name>"
+    - "<identity>"
+    - "</identity>"
+    - "<charter>"
+    - "</charter>"
+    - "<state>"
+    - "</state>"
+    - "<tests>"
+    - "</tests>"
+    - "<goal>"
+    - "</goal>"
+    - "<objective>"
+    - "</objective>"
+    - "<plan>"
+    - "</plan>"
+    - "<actions>"
+    - "</actions>"
+    - "<action>"
+    - "</action>"
+    - "<do>"
+    - "</do>"
+    - "<step>"
+    - "</step>"
+    
 training:
   trainer:
     packing: False
