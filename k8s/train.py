@@ -55,6 +55,8 @@ def launch(container_image: str, config_file: str = "mmlu_peft.yaml", distribute
     s3_secure = os.getenv("S3_SECURE", "")
     wandb_api_key = os.getenv("WANDB_API_KEY", "")
     wandb_username = os.getenv("WANDB_USERNAME", "")
+    allow_custom_tests = os.getenv("ALLOW_CUSTOM_TESTS", "")
+    allow_custom_metrics = os.getenv("ALLOW_CUSTOM_METRICS", "")
 
     assert container_image, "You need to set CONTAINER_IMAGE env var"
     assert wandb_api_key, "You need to set WANDB_API_KEY env var"
@@ -100,6 +102,8 @@ def launch(container_image: str, config_file: str = "mmlu_peft.yaml", distribute
             wandb_tags=wandb_tags,
             config_file=config_file,
             num_gpu=num_gpu,
+            allow_custom_tests=allow_custom_tests,
+            allow_custom_metrics=allow_custom_metrics,
         )
         if "config_template.yaml" == yaml_file.split("/")[-1]:
             # Set the training config as the string value for config map

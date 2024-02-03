@@ -91,6 +91,20 @@ spec:
               name: {{job_name}}
               key: s3_secure
         {% endif %}
+        {% if allow_custom_tests %}
+        - name: ALLOW_CUSTOM_TESTS
+          valueFrom:
+            secretKeyRef:
+              name: {{job_name}}
+              key: allow_custom_tests
+        {% endif %}
+        {% if allow_custom_metrics %}
+        - name: ALLOW_CUSTOM_METRICS
+          valueFrom:
+            secretKeyRef:
+              name: {{job_name}}
+              key: allow_custom_metrics
+        {% endif %}
 
         {% if config_file %}
         volumeMounts:

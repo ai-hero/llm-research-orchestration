@@ -1,0 +1,148 @@
+project:
+  name: "humset"
+
+dataset:
+  type: "s3"
+  name: "fine-tuning-research/humset"
+  format: "completion"
+
+model:
+  base:
+    type: "hf"
+    name: "meta-llama/Llama-2-7b-hf"
+  output:
+    type: "hf"
+    name: "rparundekar/llama2-7b-humset"
+
+tokenizer:
+  noop:
+  
+training:
+  trainer:
+    packing: False
+    max_seq_length: 512
+  sft:
+    per_device_train_batch_size: 24
+    per_device_eval_batch_size: 24
+    bf16: True
+    learning_rate: 0.0002
+    lr_scheduler_type: "cosine"
+    warmup_ratio: 0.1
+    max_steps: 500
+    optim: "paged_adamw_32bit"
+    max_grad_norm: 0.3
+    gradient_accumulation_steps: 4
+    gradient_checkpointing: True
+    gradient_checkpointing_kwargs:
+      use_reentrant: False
+    logging_strategy: "steps"
+    logging_steps: 5
+    evaluation_strategy: "steps"
+    eval_steps: 100
+  other:
+    freeze_embed: True
+    n_freeze: 24
+
+
+tests: |
+  import json
+  from typing import Tuple, List
+
+  def run_tests(prompts: List[str], predictions: List[str]) -> Tuple[List[bool], List[str]]:
+      expected_keys_sectors = {"Education", "Livelihoods", "Agriculture", "Food Security", "WASH", "Shelter", "Protection", "Nutrition", "Cross", "Logistics", "Health"}
+      expected_keys_pillars = {"Humanitarian Conditions", "Impact", "Information And Communication", "Shock/Event", "Humanitarian Access", "Covid-19", "Capacities & Response", "Displacement", "Priority Interventions", "At Risk", "Priority Needs", "Casualties", "Context"}
+
+      tests = []
+      errors = []
+
+      for prediction in predictions:
+          try:
+              pred_dict = json.loads(prediction)
+              sectors_keys = set(pred_dict["sectors"].keys())
+              pillars_keys = set(pred_dict["pillars"].keys())
+
+              sector_test = sectors_keys == expected_keys_sectors
+              pillar_test = pillars_keys == expected_keys_pillars
+
+              if sector_test and pillar_test:
+                  tests.append(True)
+                  errors.append("")
+              else:
+                  tests.append(False)
+                  if not sector_test:
+                      errors.append("Mismatch in sectors keys")
+                  elif not pillar_test:
+                      errors.append("Mismatch in pillars keys")
+          except json.JSONDecodeError:
+              tests.append(False)
+              errors.append("Invalid JSON format")
+          except KeyError as e:
+              tests.append(False)
+              errors.append(f"Missing key: {e}")
+      print(tests, errors)
+      return tests, errors
+
+metrics: |
+  import json
+  import numpy as np
+  from sklearn.metrics import f1_score
+  from typing import Dict, List
+
+  def run_metrics(prompts: List[str], actuals: List[str], predictions: List[str]) -> Dict[str, float]:
+    all_keys = set()
+    y_true = []
+    y_pred = []
+
+    # Gather all possible keys to ensure consistent vector lengths
+    for a, p in zip(actuals, predictions):
+        try:
+            actual_dict = json.loads(a)
+            all_keys.update(actual_dict["sectors"].keys(), actual_dict["pillars"].keys())
+        except json.JSONDecodeError:
+            print("Error decoding JSON from actual data")
+        except KeyError:
+            print("KeyError in actual data structure")
+
+        try:
+            pred_dict = json.loads(p)
+        except json.JSONDecodeError:
+            print("Error decoding JSON from prediction data")
+        except KeyError:
+            print("KeyError in prediction data structure")
+
+    sorted_all_keys = sorted(list(all_keys))
+    print("All keys", sorted_all_keys)
+
+    # Process each row with error handling
+    for actual_str, pred_str in zip(actuals, predictions):
+        try:
+            actual_dict = json.loads(actual_str)
+            pred_dict = json.loads(pred_str)
+
+            y_true_row = [int(actual_dict["sectors"].get(key, False) or actual_dict["pillars"].get(key, False)) for key in sorted_all_keys]
+            y_pred_row = [int(pred_dict["sectors"].get(key, False) or pred_dict["pillars"].get(key, False)) for key in sorted_all_keys]
+
+            y_true.append(y_true_row)
+            y_pred.append(y_pred_row)
+        except Exception as e:
+            # Handle or log the error
+            print(f"Error processing row: {e}")
+
+    print(len(y_true), len(y_pred))
+    if len(y_pred)==0:
+        return {"f1_micro": float('nan'), "f1_macro": float('nan')}
+
+    # Convert lists to numpy arrays
+    y_true_np = np.array(y_true)
+    y_pred_np = np.array(y_pred)
+
+    # Calculate metrics, ensuring there are rows to evaluate
+    if len(y_true_np) > 0 and len(y_pred_np) > 0:
+        metrics = {
+            "f1_micro": f1_score(y_true_np, y_pred_np, average='micro'),
+            "f1_macro": f1_score(y_true_np, y_pred_np, average='macro')
+        }
+    else:
+        metrics = {"f1_micro": float('nan'), "f1_macro": float('nan')}
+    metrics["count"] = len(y_pred)
+    return metrics
