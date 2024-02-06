@@ -1,20 +1,19 @@
 project:
   name: "yacheq"
 
-dataset:
-  type: "s3"
-  name: "fine-tuning-research/yacheq"
-  format: "completion"
-
-model:
-  base:
-    type: "hf"
-    name: "meta-llama/Llama-2-7b-hf"
-  output:
-    type: "hf"
-    name: "rparundekar/llama2-7b-yacheq"
-
 training:
+  dataset:
+    type: "s3"
+    name: "fine-tuning-research/yacheq"
+    format: "completion"
+
+  model:
+    base:
+      type: "hf"
+      name: "meta-llama/Llama-2-7b-hf"
+    output:
+      type: "hf"
+      name: "rparundekar/llama2-7b-yacheq"
   trainer:
     packing: False
     max_seq_length: 512

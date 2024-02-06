@@ -1,20 +1,19 @@
 project:
   name: "fine_tune_research"
 
-dataset:
-  type: "hf"
-  name: "sadmoseby/sample-function-call"
-  format: "text"
-
-model:
-  base:
-    type: "hf"
-    name: "meta-llama/Llama-2-7b-hf"
-  output:
-    type: "hf"
-    name: "sadmoseby/llama-2-hf-function-call"
-
 training:
+  dataset:
+    type: "hf"
+    name: "sadmoseby/sample-function-call"
+    format: "text"
+
+  model:
+    base:
+      type: "hf"
+      name: "meta-llama/Llama-2-7b-hf"
+    output:
+      type: "hf"
+      name: "sadmoseby/llama-2-hf-function-call"
   trainer:
     packing: True
     max_seq_length: 512

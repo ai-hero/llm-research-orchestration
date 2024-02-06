@@ -1,26 +1,28 @@
 project:
   name: "humset"
 
-dataset:
-  type: "s3"
-  name: "fine-tuning-research/humset"
-  format: "completion"
-
-model:
-  base:
-    type: "hf"
-    name: "meta-llama/Llama-2-7b-hf"
-  output:
-    type: "hf"
-    name: "rparundekar/llama2-7b-humset"
 
 tokenizer:
   noop:
   
 training:
+  dataset:
+    type: "s3"
+    name: "fine-tuning-research/humset"
+    format: "completion"
+
+  model:
+    base:
+      type: "hf"
+      name: "meta-llama/Llama-2-7b-hf"
+    output:
+      type: "hf"
+      name: "rparundekar/llama2-7b-humset"
+
   trainer:
     packing: False
     max_seq_length: 512
+
   sft:
     per_device_train_batch_size: 24
     per_device_eval_batch_size: 24
@@ -39,6 +41,7 @@ training:
     logging_steps: 5
     evaluation_strategy: "steps"
     eval_steps: 100
+    
   other:
     freeze_embed: True
     n_freeze: 24

@@ -77,7 +77,7 @@ def launch(container_image: str, config_file: str = "mmlu_peft.yaml", distribute
             distributed_training_config = yaml.safe_load(f)
             num_gpu = distributed_training_config["num_processes"]
 
-    dataset_name = training_config["dataset"]["name"]
+    dataset_name = training_config["training"]["dataset"]["name"]
     project_name = training_config["project"]["name"]
     wandb_tags = f"{os.getenv('USER',os.getenv('USERNAME'))},{job_name},{dataset_name}"
 
