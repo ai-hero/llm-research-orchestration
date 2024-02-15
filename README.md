@@ -36,6 +36,8 @@ S3_REGION=us-east-2
 S3_SECURE=true
 ```
 
+## Running in colab.
+Please checkout `notebooks/fine_tuning_research.ipynb`.
 
 ## Launching a Fine-Tuning Job
 ```sh
