@@ -3,10 +3,6 @@
 Code used to orchestrate the fine-tune and serving services on top of Kubernetes. 
 
 ## Setup
-
-### Kubernetes
-Currently we are only supporting Coreweave.
-- `Coreweave` - We assume that you have downloaded the `kubeconfig` file and can see your pods using `kubectl get pods`.
   
 ### Requirements
 ```sh
@@ -36,13 +32,19 @@ S3_REGION=us-east-2
 S3_SECURE=true
 ```
 
-## Running in colab.
-Please checkout `notebooks/fine_tuning_research.ipynb`.
+### Data
+Set up data for training or inference using the instructions in the [llm-research-data](https://github.com/ai-hero/llm-research-data) project.
 
-## Launching a Fine-Tuning Job
+## Running in colab.
+Please checkout `notebooks/Launch_SFT_jobs_in_the_Notebook.ipynb`.
+
+## Running on Coreweave: Launching a Fine-Tuning Job
 ```sh
 cd k8s/
 ```
+### Kubernetes
+Currently we are only supporting Coreweave.
+- `Coreweave` - We assume that you have downloaded the `kubeconfig` file and can see your pods using `kubectl get pods`.
 
 ### Update the Config for the Job
 Update [k8s/yamls/config.yaml](k8s/yamls/config.yaml) as needed for your job.
@@ -55,7 +57,10 @@ python train.py launch rparundekar/fine_tune_research:fbea00f mmlu_peft.yaml
 You'll see the name of the job. And instructions to see the logs and delete the job.
 NOTE: The container is created in the fine-tuning project.
 
-If launching with a distributed config
+The hash above should be the 7-hex hash in the [llm-research-fine-tuning](https://github.com/ai-hero/llm-research-fine-tuning) project's main branch.
+
+
+#### If launching with a distributed config
 ```sh
 cd k8s/
 python train.py launch rparundekar/fine_tune_research:fbea00f distributed_default.yaml -d fsdp_single_worker.yaml
@@ -65,6 +70,11 @@ python train.py launch rparundekar/fine_tune_research:fbea00f distributed_defaul
 Use the same program to delete the job so that all resources are deleted.
 ```sh
 python train.py delete <job-name>
+```
+
+## Batch Inference with Pretrained LLM
+```sh
+python infer.py launch rparundekar/fine_tune_research:fbea00f open_instruct_batch_inference.yaml
 ```
 
 ## Serving a Trained Model
