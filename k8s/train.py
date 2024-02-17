@@ -10,6 +10,9 @@ from codenamize import codenamize
 from dotenv import load_dotenv
 from fire import Fire
 from jinja2 import Environment, FileSystemLoader
+from typing import Union
+from aihero.research.config import Config
+from pydantic import ValidationError
 
 # Load environment variables
 load_dotenv()
@@ -58,7 +61,6 @@ def launch(container_image: str, config_file: str = "mmlu_peft.yaml", distribute
     allow_custom_tests = os.getenv("ALLOW_CUSTOM_TESTS", "")
     allow_custom_metrics = os.getenv("ALLOW_CUSTOM_METRICS", "")
 
-    assert container_image, "You need to set CONTAINER_IMAGE env var"
     assert wandb_api_key, "You need to set WANDB_API_KEY env var"
     assert wandb_username, "You need to set WANDB_USERNAME env var"
 
@@ -147,6 +149,22 @@ def delete(job_name: str) -> None:
     with subprocess.Popen(["kubectl", "delete", "secret", job_name], stdin=subprocess.PIPE, text=True) as proc:
         proc.communicate()
     print(f"Deleted Kubernetes secret {job_name}")
+
+
+def load_and_validate_config(file_path: str) -> Union[Config, None]:
+    """Load and validate a configuration file."""
+    try:
+        with open(file_path, "r") as file:
+            data = yaml.safe_load(file)
+            config = Config(**data)
+            return config
+    except FileNotFoundError:
+        print(f"File not found: {file_path}")
+    except ValidationError as e:
+        print(f"Validation error: {e}")
+    except yaml.YAMLError as e:
+        print(f"YAML parsing error: {e}")
+    return None
 
 
 if __name__ == "__main__":

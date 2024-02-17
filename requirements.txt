@@ -9,3 +9,4 @@ pyupgrade
 detect-secrets
 tomli
 pre-commit
+git+https://github.com/ai-hero/llm-research-config.git@main
