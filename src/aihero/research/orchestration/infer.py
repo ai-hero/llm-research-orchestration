@@ -10,6 +10,7 @@ from codenamize import codenamize
 from dotenv import load_dotenv
 from fire import Fire
 from jinja2 import Environment, FileSystemLoader
+from aihero.research.config import Config
 
 # Load environment variables
 load_dotenv()
@@ -39,8 +40,10 @@ def check_kubernetes_connection() -> None:
         raise SystemExit(1)
 
 
-def launch(container_image: str, config_file: str = "mmlu_peft.yaml", distributed_config_file: str = "") -> None:
+def launch(container_image: str, config_file: str, distributed_config_file: str = "") -> None:
     """Launch a Kubernetes job for batch_inference a model."""
+    batch_inference_config = Config.load(config_file)
+
     job_name = codenamize(f"{config_file}-{time.time()}")
     print(f"Job name: {job_name}")
     num_gpu = ""
@@ -67,18 +70,10 @@ def launch(container_image: str, config_file: str = "mmlu_peft.yaml", distribute
     env.filters["b64encode"] = b64encode_filter
 
     # Directory containing the YAML files
-    yaml_dir = os.path.join(os.path.dirname(__file__), "yamls", "batch_inference")
+    yaml_dir = os.path.join(os.path.dirname(__file__), "templates", "batch_inference")
 
-    # Load batch_inference config file and extract dataset name
-    with open(os.path.join(os.path.dirname(__file__), "configs", config_file)) as f:
-        batch_inference_config = yaml.safe_load(f)
-    if distributed_config_file:
-        with open(os.path.join(os.path.dirname(__file__), "distributed", distributed_config_file)) as f:
-            distributed_batch_inference_config = yaml.safe_load(f)
-            num_gpu = distributed_batch_inference_config["num_processes"]
-
-    dataset_name = batch_inference_config["batch_inference"]["dataset"]["name"]
-    project_name = batch_inference_config["project"]["name"]
+    dataset_name = batch_inference_config.batch_inference.dataset.name
+    project_name = batch_inference_config.project.name
     wandb_tags = f"{os.getenv('USER',os.getenv('USERNAME'))},{job_name},{dataset_name}"
 
     # Iterate through all yaml files in the 'yamls' directory
@@ -109,8 +104,6 @@ def launch(container_image: str, config_file: str = "mmlu_peft.yaml", distribute
             # Set the batch_inference config as the string value for config map
             config = yaml.safe_load(rendered_template)
             config["data"]["config.yaml"] = yaml.dump(batch_inference_config)
-            if num_gpu:
-                config["data"]["distributed.yaml"] = yaml.dump(distributed_batch_inference_config)
             rendered_template = yaml.dump(config)
 
         # Use subprocess.Popen with communicate to apply the Kubernetes configuration

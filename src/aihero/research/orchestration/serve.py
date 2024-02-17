@@ -8,6 +8,7 @@ import yaml  # type: ignore
 from dotenv import load_dotenv
 from fire import Fire
 from jinja2 import Environment, FileSystemLoader
+from aihero.research.config import Config
 
 # Load environment variables
 load_dotenv()
@@ -21,8 +22,10 @@ def b64encode_filter(s: str) -> str:
     return None
 
 
-def launch(config_file: str = "mmlu_peft.yaml") -> None:
+def launch(config_file: str) -> None:
     """Launch a Kubernetes service for serving the model."""
+    serving_config = Config.load(config_file)
+
     hf_token = os.getenv("HF_TOKEN", "")
     s3_endpoint = os.getenv("S3_ENDPOINT", "")
     s3_access_key_id = os.getenv("S3_ACCESS_KEY_ID", "")
@@ -40,16 +43,12 @@ def launch(config_file: str = "mmlu_peft.yaml") -> None:
     env.filters["b64encode"] = b64encode_filter
 
     # Directory containing the YAML files
-    yaml_dir = os.path.join(os.path.dirname(__file__), "yamls", "serving")
+    yaml_dir = os.path.join(os.path.dirname(__file__), "templates", "serving")
 
-    # Load training config file and extract dataset name
-    with open(os.path.join(os.path.dirname(__file__), "configs", config_file)) as f:
-        training_config = yaml.safe_load(f)
-
-    assert training_config["model"]["output"]["type"] == "hf", "Only hf models are supported for serving"
-    model_name = training_config["model"]["output"]["name"]
+    assert serving_config.model.output.type == "hf", "Only hf models are supported for serving"
+    model_name = serving_config.model.output.name
     app_name = model_name.split("/")[-1].lower()
-    project_name = training_config["project"]["name"]
+    project_name = serving_config.project.name
 
     # Iterate through all yaml files in the 'yamls' directory
     for yaml_file in glob.glob(os.path.join(yaml_dir, "*.yaml")):
@@ -71,7 +70,7 @@ def launch(config_file: str = "mmlu_peft.yaml") -> None:
         if "config_template.yaml" == yaml_file.split("/")[-1]:
             # Set the training config as the string value for config map
             config = yaml.safe_load(rendered_template)
-            config["data"]["config.yaml"] = yaml.dump(training_config)
+            config["data"]["config.yaml"] = yaml.dump(serving_config)
             rendered_template = yaml.dump(config)
 
         # Use subprocess.Popen with communicate to apply the Kubernetes configuration

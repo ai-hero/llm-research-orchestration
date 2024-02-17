@@ -1,12 +1,12 @@
 [project]
-name = "Fine-Tuning Reserch"
-version = "0.1.0"
-description = "Open source research on fine-tuning LLMs"
-authors = ["Rahul Parundekar <rahul@aihero.studio>", "Shankar Ganesan <gshankar.87@gmail.com>"]
-license = "MIT"
+name = "aihero-research-orchestration"
+version = "0.2.0"
+description = "Framework for open source research on fine-tuning LLMs"
+authors = [
+    {name = "Rahul Parundekar", email= "rahul@aihero.studio" },
+    {name = "Shankar Ganesan", email = "gshankar.87@gmail.com" }
+]
 readme = "README.md"
-homepage = "https://aihero.studio"
-repository = "https://github.com/ai-hero/fine_tune_research"
 classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.9",
@@ -14,6 +14,15 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "License :: OSI Approved :: MIT License",
 ]
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+optional-dependencies = {dev = { file = ["requirements-dev.txt"] }}
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
 addopts = "-vvv"

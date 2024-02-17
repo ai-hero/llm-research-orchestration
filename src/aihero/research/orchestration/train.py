@@ -10,9 +10,7 @@ from codenamize import codenamize
 from dotenv import load_dotenv
 from fire import Fire
 from jinja2 import Environment, FileSystemLoader
-from typing import Union
 from aihero.research.config import Config
-from pydantic import ValidationError
 
 # Load environment variables
 load_dotenv()
@@ -42,8 +40,10 @@ def check_kubernetes_connection() -> None:
         raise SystemExit(1)
 
 
-def launch(container_image: str, config_file: str = "mmlu_peft.yaml", distributed_config_file: str = "") -> None:
+def launch(container_image: str, config_file: str, distributed_config_file: str = "") -> None:
     """Launch a Kubernetes job for training a model."""
+    training_config = Config.load(config_file)
+
     job_name = codenamize(f"{config_file}-{time.time()}")
     print(f"Job name: {job_name}")
     num_gpu = ""
@@ -69,18 +69,16 @@ def launch(container_image: str, config_file: str = "mmlu_peft.yaml", distribute
     env.filters["b64encode"] = b64encode_filter
 
     # Directory containing the YAML files
-    yaml_dir = os.path.join(os.path.dirname(__file__), "yamls", "training")
+    yaml_dir = os.path.join(os.path.dirname(__file__), "templates", "training")
 
     # Load training config file and extract dataset name
-    with open(os.path.join(os.path.dirname(__file__), "configs", config_file)) as f:
-        training_config = yaml.safe_load(f)
     if distributed_config_file:
-        with open(os.path.join(os.path.dirname(__file__), "distributed", distributed_config_file)) as f:
+        with open(distributed_config_file) as f:
             distributed_training_config = yaml.safe_load(f)
             num_gpu = distributed_training_config["num_processes"]
 
-    dataset_name = training_config["training"]["dataset"]["name"]
-    project_name = training_config["project"]["name"]
+    dataset_name = training_config.training.dataset.name
+    project_name = training_config.project.name
     wandb_tags = f"{os.getenv('USER',os.getenv('USERNAME'))},{job_name},{dataset_name}"
 
     # Iterate through all yaml files in the 'yamls' directory
@@ -149,22 +147,6 @@ def delete(job_name: str) -> None:
     with subprocess.Popen(["kubectl", "delete", "secret", job_name], stdin=subprocess.PIPE, text=True) as proc:
         proc.communicate()
     print(f"Deleted Kubernetes secret {job_name}")
-
-
-def load_and_validate_config(file_path: str) -> Union[Config, None]:
-    """Load and validate a configuration file."""
-    try:
-        with open(file_path, "r") as file:
-            data = yaml.safe_load(file)
-            config = Config(**data)
-            return config
-    except FileNotFoundError:
-        print(f"File not found: {file_path}")
-    except ValidationError as e:
-        print(f"Validation error: {e}")
-    except yaml.YAMLError as e:
-        print(f"YAML parsing error: {e}")
-    return None
 
 
 if __name__ == "__main__":

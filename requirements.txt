@@ -1,12 +1,8 @@
-# Code QA
-python-dotenv
-black
-mypy
-ruff
-pytest
-blacken-docs
-pyupgrade
-detect-secrets
-tomli
-pre-commit
+# Base
 git+https://github.com/ai-hero/llm-research-config.git@main
+
+# Launch related
+python-dotenv
+jinja2
+kubernetes
+codenamize
