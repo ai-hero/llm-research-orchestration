@@ -8,7 +8,7 @@ import time
 import yaml  # type: ignore
 from codenamize import codenamize
 from dotenv import load_dotenv
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import BaseLoader, Environment
 
 from aihero.research.config.schema import TrainingJob
 
@@ -66,7 +66,7 @@ def launch(container_image: str, config_file: str, distributed_config_file: str 
     assert wandb_username, "You need to set WANDB_USERNAME env var"
 
     # Setup Jinja2 environment
-    env = Environment(loader=FileSystemLoader("."))
+    env = Environment(loader=BaseLoader())
     env.filters["b64encode"] = b64encode_filter
 
     # Directory containing the YAML files
@@ -85,7 +85,8 @@ def launch(container_image: str, config_file: str, distributed_config_file: str 
     # Iterate through all yaml files in the 'yamls' directory
     for yaml_file in glob.glob(os.path.join(yaml_dir, "*.yaml")):
         # Load the template
-        template = env.get_template(os.path.relpath(yaml_file))
+        with open(yaml_file, encoding="utf-8") as f:
+            template = env.from_string(f.read())
         # Render the template with environment variables
         rendered_template = template.render(
             project_name=project_name,
