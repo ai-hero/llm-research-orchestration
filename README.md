@@ -1,9 +1,9 @@
 # Orchestration for LLM Research by AI Hero
 
-Code used to orchestrate the fine-tune and serving services on top of Kubernetes. 
+Code used to orchestrate the fine-tune and serving services on top of Kubernetes.
 
 ## Setup
-  
+
 ### Requirements
 ```sh
 pip install -r requirements.txt
@@ -13,12 +13,12 @@ pip install -r poc/requirements.txt
 
 ### Llama 2
 Make sure you've signed the T&Cs to be able to access the llama-2 weights on Huggingface.
- 
+
 ### Environment
 You'll also need a `.env` file in the `k8s` folder from where you'll run the jobs.
 ```
 # For reporting experiments to W&B
-WANDB_API_KEY=   
+WANDB_API_KEY=
 WANDB_USERNAME=
 
 # For loading/saving data/models to Huggingface
