@@ -1,9 +1,6 @@
-# Base
 aihero-research-config
 aihero-research-finetuning
-
-# Launch related
-python-dotenv
+codenamize
 jinja2
 kubernetes
-codenamize
+python-dotenv

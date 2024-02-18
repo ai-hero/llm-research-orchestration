@@ -77,7 +77,7 @@ def launch(config_file: str) -> None:
         with subprocess.Popen(["kubectl", "apply", "-f", "-"], stdin=subprocess.PIPE, text=True) as proc:
             proc.communicate(rendered_template)
 
-    print(f"Applied Kubernetes configuration from {yaml_file}")
+        print(f"Applied Kubernetes configuration from {yaml_file}")
 
     print(f"Launched service name: {app_name}")
     print(f"1. To see status, run: kubectl describe deployment/{app_name}")
