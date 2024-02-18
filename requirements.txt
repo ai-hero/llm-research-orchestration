@@ -1,5 +1,6 @@
 # Base
-git+https://github.com/ai-hero/llm-research-config.git@main#egg=aihero-research-config
+aihero-research-config
+aihero-research-finetuning
 
 # Launch related
 python-dotenv
