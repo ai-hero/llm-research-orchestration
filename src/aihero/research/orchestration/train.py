@@ -1,4 +1,4 @@
-"""Script used to launch a Kubernetes job for batch_inference a model."""
+"""Script used to launch a Kubernetes job for training a model."""
 import base64
 import glob
 import os
@@ -8,8 +8,9 @@ import time
 import yaml  # type: ignore
 from codenamize import codenamize
 from dotenv import load_dotenv
-from fire import Fire
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import BaseLoader, Environment
+
+from aihero.research.config.schema import TrainingJob
 
 # Load environment variables
 load_dotenv()
@@ -39,8 +40,11 @@ def check_kubernetes_connection() -> None:
         raise SystemExit(1)
 
 
-def launch(container_image: str, config_file: str = "mmlu_peft.yaml", distributed_config_file: str = "") -> None:
-    """Launch a Kubernetes job for batch_inference a model."""
+def launch(container_image: str, config_file: str, distributed_config_file: str = "") -> None:
+    """Launch a Kubernetes job for training a model."""
+    check_kubernetes_connection()
+    training_config = TrainingJob.load(config_file)
+
     job_name = codenamize(f"{config_file}-{time.time()}")
     print(f"Job name: {job_name}")
     num_gpu = ""
@@ -58,33 +62,31 @@ def launch(container_image: str, config_file: str = "mmlu_peft.yaml", distribute
     allow_custom_tests = os.getenv("ALLOW_CUSTOM_TESTS", "")
     allow_custom_metrics = os.getenv("ALLOW_CUSTOM_METRICS", "")
 
-    assert container_image, "You need to set CONTAINER_IMAGE env var"
     assert wandb_api_key, "You need to set WANDB_API_KEY env var"
     assert wandb_username, "You need to set WANDB_USERNAME env var"
 
     # Setup Jinja2 environment
-    env = Environment(loader=FileSystemLoader("."))
+    env = Environment(loader=BaseLoader())
     env.filters["b64encode"] = b64encode_filter
 
     # Directory containing the YAML files
-    yaml_dir = os.path.join(os.path.dirname(__file__), "yamls", "batch_inference")
+    yaml_dir = os.path.join(os.path.dirname(__file__), "templates", "training")
 
-    # Load batch_inference config file and extract dataset name
-    with open(os.path.join(os.path.dirname(__file__), "configs", config_file)) as f:
-        batch_inference_config = yaml.safe_load(f)
+    # Load training config file and extract dataset name
     if distributed_config_file:
-        with open(os.path.join(os.path.dirname(__file__), "distributed", distributed_config_file)) as f:
-            distributed_batch_inference_config = yaml.safe_load(f)
-            num_gpu = distributed_batch_inference_config["num_processes"]
+        with open(distributed_config_file) as f:
+            distributed_training_config = yaml.safe_load(f)
+            num_gpu = distributed_training_config["num_processes"]
 
-    dataset_name = batch_inference_config["batch_inference"]["dataset"]["name"]
-    project_name = batch_inference_config["project"]["name"]
+    dataset_name = training_config.dataset.name
+    project_name = training_config.project.name
     wandb_tags = f"{os.getenv('USER',os.getenv('USERNAME'))},{job_name},{dataset_name}"
 
     # Iterate through all yaml files in the 'yamls' directory
     for yaml_file in glob.glob(os.path.join(yaml_dir, "*.yaml")):
         # Load the template
-        template = env.get_template(os.path.relpath(yaml_file))
+        with open(yaml_file, encoding="utf-8") as f:
+            template = env.from_string(f.read())
         # Render the template with environment variables
         rendered_template = template.render(
             project_name=project_name,
@@ -106,18 +108,18 @@ def launch(container_image: str, config_file: str = "mmlu_peft.yaml", distribute
             allow_custom_metrics=allow_custom_metrics,
         )
         if "config_template.yaml" == yaml_file.split("/")[-1]:
-            # Set the batch_inference config as the string value for config map
+            # Set the training config as the string value for config map
             config = yaml.safe_load(rendered_template)
-            config["data"]["config.yaml"] = yaml.dump(batch_inference_config)
+            config["data"]["config.yaml"] = yaml.dump(training_config.model_dump())
             if num_gpu:
-                config["data"]["distributed.yaml"] = yaml.dump(distributed_batch_inference_config)
+                config["data"]["distributed.yaml"] = yaml.dump(distributed_training_config)
             rendered_template = yaml.dump(config)
 
         # Use subprocess.Popen with communicate to apply the Kubernetes configuration
         with subprocess.Popen(["kubectl", "apply", "-f", "-"], stdin=subprocess.PIPE, text=True) as proc:
             proc.communicate(rendered_template)
 
-    print(f"Applied Kubernetes configuration from {yaml_file}")
+        print(f"Applied Kubernetes configuration from {yaml_file}")
 
     print(f"Launched job name: {job_name}")
     print(f"1. To see status, run: kubectl describe job/{job_name}")
@@ -127,6 +129,7 @@ def launch(container_image: str, config_file: str = "mmlu_peft.yaml", distribute
 
 def delete(job_name: str) -> None:
     """Delete a Kubernetes job and other artifacts."""
+    check_kubernetes_connection()
     assert job_name, "You need to provide job_name"
     # Use subprocess.Popen with communicate to delete the Kubernetes job
     with subprocess.Popen(["kubectl", "delete", "job", job_name], stdin=subprocess.PIPE, text=True) as proc:
@@ -147,13 +150,3 @@ def delete(job_name: str) -> None:
     with subprocess.Popen(["kubectl", "delete", "secret", job_name], stdin=subprocess.PIPE, text=True) as proc:
         proc.communicate()
     print(f"Deleted Kubernetes secret {job_name}")
-
-
-if __name__ == "__main__":
-    check_kubernetes_connection()
-    Fire(
-        {
-            "launch": launch,
-            "delete": delete,
-        }
-    )

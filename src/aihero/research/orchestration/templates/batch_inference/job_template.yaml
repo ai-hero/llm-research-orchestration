@@ -29,9 +29,9 @@ spec:
         - bash
         - "-c"
         {% if num_gpu %}
-        - "accelerate launch --config_file /mnt/config/training/distributed.yaml sft.py"
+        - "accelerate launch --config_file /mnt/config/training/distributed.yaml launch.py infer  /mnt/config/batch_inference/config.yaml"
         {% else %}
-        - "python sft.py"
+        - "python launch.py infer   /mnt/config/batch_inference/config.yaml"
         {% endif %}
         env:
         {% if hf_token %}
@@ -108,8 +108,8 @@ spec:
 
         {% if config_file %}
         volumeMounts:
-          - mountPath: "/mnt/config/training"
-            name: training-config
+          - mountPath: "/mnt/config/batch_inference"
+            name: inference-config
             readOnly: true
         {% endif %}
       affinity:
@@ -123,7 +123,7 @@ spec:
                   - A100_PCIE_40GB
     {% if config_file %}
       volumes:
-        - name: training-config
+        - name: inference-config
           configMap:
             name: {{job_name}}
     {% endif %}
