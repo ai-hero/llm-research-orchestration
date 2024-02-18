@@ -8,7 +8,7 @@ import yaml  # type: ignore
 from dotenv import load_dotenv
 from fire import Fire
 from jinja2 import Environment, FileSystemLoader
-from aihero.research.config import Config
+from aihero.research.config.schema import ServingService
 
 # Load environment variables
 load_dotenv()
@@ -24,7 +24,7 @@ def b64encode_filter(s: str) -> str:
 
 def launch(config_file: str) -> None:
     """Launch a Kubernetes service for serving the model."""
-    serving_config = Config.load(config_file)
+    serving_config = ServingService.load(config_file)
 
     hf_token = os.getenv("HF_TOKEN", "")
     s3_endpoint = os.getenv("S3_ENDPOINT", "")

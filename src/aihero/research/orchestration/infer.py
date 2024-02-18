@@ -10,7 +10,7 @@ from codenamize import codenamize
 from dotenv import load_dotenv
 from fire import Fire
 from jinja2 import Environment, FileSystemLoader
-from aihero.research.config import Config
+from aihero.research.config.schema import BatchInferenceJobConfig
 
 # Load environment variables
 load_dotenv()
@@ -42,7 +42,7 @@ def check_kubernetes_connection() -> None:
 
 def launch(container_image: str, config_file: str, distributed_config_file: str = "") -> None:
     """Launch a Kubernetes job for batch_inference a model."""
-    batch_inference_config = Config.load(config_file)
+    batch_inference_config = BatchInferenceJobConfig.load(config_file)
 
     job_name = codenamize(f"{config_file}-{time.time()}")
     print(f"Job name: {job_name}")
@@ -72,7 +72,7 @@ def launch(container_image: str, config_file: str, distributed_config_file: str 
     # Directory containing the YAML files
     yaml_dir = os.path.join(os.path.dirname(__file__), "templates", "batch_inference")
 
-    dataset_name = batch_inference_config.batch_inference.dataset.name
+    dataset_name = batch_inference_config.dataset.name
     project_name = batch_inference_config.project.name
     wandb_tags = f"{os.getenv('USER',os.getenv('USERNAME'))},{job_name},{dataset_name}"
 
@@ -103,7 +103,7 @@ def launch(container_image: str, config_file: str, distributed_config_file: str 
         if "config_template.yaml" == yaml_file.split("/")[-1]:
             # Set the batch_inference config as the string value for config map
             config = yaml.safe_load(rendered_template)
-            config["data"]["config.yaml"] = yaml.dump(batch_inference_config)
+            config["data"]["config.yaml"] = yaml.dump(batch_inference_config.model_dump())
             rendered_template = yaml.dump(config)
 
         # Use subprocess.Popen with communicate to apply the Kubernetes configuration

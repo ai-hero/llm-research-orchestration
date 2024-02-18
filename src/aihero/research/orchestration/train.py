@@ -10,7 +10,7 @@ from codenamize import codenamize
 from dotenv import load_dotenv
 from fire import Fire
 from jinja2 import Environment, FileSystemLoader
-from aihero.research.config import Config
+from aihero.research.config.schema import TrainingJob
 
 # Load environment variables
 load_dotenv()
@@ -42,7 +42,8 @@ def check_kubernetes_connection() -> None:
 
 def launch(container_image: str, config_file: str, distributed_config_file: str = "") -> None:
     """Launch a Kubernetes job for training a model."""
-    training_config = Config.load(config_file)
+    check_kubernetes_connection()
+    training_config = TrainingJob.load(config_file)
 
     job_name = codenamize(f"{config_file}-{time.time()}")
     print(f"Job name: {job_name}")
@@ -77,7 +78,7 @@ def launch(container_image: str, config_file: str, distributed_config_file: str 
             distributed_training_config = yaml.safe_load(f)
             num_gpu = distributed_training_config["num_processes"]
 
-    dataset_name = training_config.training.dataset.name
+    dataset_name = training_config.dataset.name
     project_name = training_config.project.name
     wandb_tags = f"{os.getenv('USER',os.getenv('USERNAME'))},{job_name},{dataset_name}"
 
@@ -108,7 +109,7 @@ def launch(container_image: str, config_file: str, distributed_config_file: str 
         if "config_template.yaml" == yaml_file.split("/")[-1]:
             # Set the training config as the string value for config map
             config = yaml.safe_load(rendered_template)
-            config["data"]["config.yaml"] = yaml.dump(training_config)
+            config["data"]["config.yaml"] = yaml.dump(training_config.model_dump())
             if num_gpu:
                 config["data"]["distributed.yaml"] = yaml.dump(distributed_training_config)
             rendered_template = yaml.dump(config)
@@ -127,6 +128,7 @@ def launch(container_image: str, config_file: str, distributed_config_file: str 
 
 def delete(job_name: str) -> None:
     """Delete a Kubernetes job and other artifacts."""
+    check_kubernetes_connection()
     assert job_name, "You need to provide job_name"
     # Use subprocess.Popen with communicate to delete the Kubernetes job
     with subprocess.Popen(["kubectl", "delete", "job", job_name], stdin=subprocess.PIPE, text=True) as proc:
@@ -150,7 +152,6 @@ def delete(job_name: str) -> None:
 
 
 if __name__ == "__main__":
-    check_kubernetes_connection()
     Fire(
         {
             "launch": launch,

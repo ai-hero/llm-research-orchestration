@@ -29,9 +29,9 @@ spec:
         - bash
         - "-c"
         {% if num_gpu %}
-        - "accelerate launch --config_file /mnt/config/training/distributed.yaml sft.py"
+        - "accelerate launch --config_file /mnt/config/training/distributed.yaml launch.py train /mnt/config/training"
         {% else %}
-        - "python sft.py"
+        - "python launch.py train /mnt/config/training/config.yaml"
         {% endif %}
         env:
         {% if hf_token %}
