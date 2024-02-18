@@ -6,7 +6,6 @@ import subprocess
 
 import yaml  # type: ignore
 from dotenv import load_dotenv
-from fire import Fire
 from jinja2 import Environment, FileSystemLoader
 
 from aihero.research.config.schema import ServingService
@@ -102,12 +101,3 @@ def delete(app_name: str) -> None:
     with subprocess.Popen(["kubectl", "delete", "secret", app_name], stdin=subprocess.PIPE, text=True) as proc:
         proc.communicate()
     print(f"Deleted Kubernetes secret {app_name}")
-
-
-if __name__ == "__main__":
-    Fire(
-        {
-            "launch": launch,
-            "delete": delete,
-        }
-    )

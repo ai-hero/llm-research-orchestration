@@ -8,7 +8,6 @@ import time
 import yaml  # type: ignore
 from codenamize import codenamize
 from dotenv import load_dotenv
-from fire import Fire
 from jinja2 import Environment, FileSystemLoader
 
 from aihero.research.config.schema import TrainingJob
@@ -150,12 +149,3 @@ def delete(job_name: str) -> None:
     with subprocess.Popen(["kubectl", "delete", "secret", job_name], stdin=subprocess.PIPE, text=True) as proc:
         proc.communicate()
     print(f"Deleted Kubernetes secret {job_name}")
-
-
-if __name__ == "__main__":
-    Fire(
-        {
-            "launch": launch,
-            "delete": delete,
-        }
-    )

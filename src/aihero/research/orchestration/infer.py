@@ -8,7 +8,6 @@ import time
 import yaml  # type: ignore
 from codenamize import codenamize
 from dotenv import load_dotenv
-from fire import Fire
 from jinja2 import Environment, FileSystemLoader
 
 from aihero.research.config.schema import BatchInferenceJob
@@ -43,6 +42,7 @@ def check_kubernetes_connection() -> None:
 
 def launch(container_image: str, config_file: str, distributed_config_file: str = "") -> None:
     """Launch a Kubernetes job for batch_inference a model."""
+    check_kubernetes_connection()
     batch_inference_config = BatchInferenceJob.load(config_file)
 
     job_name = codenamize(f"{config_file}-{time.time()}")
@@ -121,6 +121,7 @@ def launch(container_image: str, config_file: str, distributed_config_file: str 
 
 def delete(job_name: str) -> None:
     """Delete a Kubernetes job and other artifacts."""
+    check_kubernetes_connection()
     assert job_name, "You need to provide job_name"
     # Use subprocess.Popen with communicate to delete the Kubernetes job
     with subprocess.Popen(["kubectl", "delete", "job", job_name], stdin=subprocess.PIPE, text=True) as proc:
@@ -141,13 +142,3 @@ def delete(job_name: str) -> None:
     with subprocess.Popen(["kubectl", "delete", "secret", job_name], stdin=subprocess.PIPE, text=True) as proc:
         proc.communicate()
     print(f"Deleted Kubernetes secret {job_name}")
-
-
-if __name__ == "__main__":
-    check_kubernetes_connection()
-    Fire(
-        {
-            "launch": launch,
-            "delete": delete,
-        }
-    )
