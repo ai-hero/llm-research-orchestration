@@ -1,6 +1,0 @@
-aihero-research-config
-aihero-research-finetuning
-codenamize
-jinja2
-kubernetes
-python-dotenv
