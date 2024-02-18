@@ -10,7 +10,7 @@ from codenamize import codenamize
 from dotenv import load_dotenv
 from fire import Fire
 from jinja2 import Environment, FileSystemLoader
-from aihero.research.config.schema import BatchInferenceJobConfig
+from aihero.research.config.schema import BatchInferenceJob
 
 # Load environment variables
 load_dotenv()
@@ -42,7 +42,7 @@ def check_kubernetes_connection() -> None:
 
 def launch(container_image: str, config_file: str, distributed_config_file: str = "") -> None:
     """Launch a Kubernetes job for batch_inference a model."""
-    batch_inference_config = BatchInferenceJobConfig.load(config_file)
+    batch_inference_config = BatchInferenceJob.load(config_file)
 
     job_name = codenamize(f"{config_file}-{time.time()}")
     print(f"Job name: {job_name}")

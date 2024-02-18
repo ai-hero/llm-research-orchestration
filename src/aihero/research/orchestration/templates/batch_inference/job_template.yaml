@@ -29,9 +29,9 @@ spec:
         - bash
         - "-c"
         {% if num_gpu %}
-        - "accelerate launch --config_file /mnt/config/training/distributed.yaml launch.py infer"
+        - "accelerate launch --config_file /mnt/config/training/distributed.yaml launch.py infer  /mnt/config/batch_inference/config.yaml"
         {% else %}
-        - "python launch.py infer"
+        - "python launch.py infer   /mnt/config/batch_inference/config.yaml"
         {% endif %}
         env:
         {% if hf_token %}
@@ -108,7 +108,7 @@ spec:
 
         {% if config_file %}
         volumeMounts:
-          - mountPath: "/mnt/config/inference"
+          - mountPath: "/mnt/config/batch_inference"
             name: inference-config
             readOnly: true
         {% endif %}

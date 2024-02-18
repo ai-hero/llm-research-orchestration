@@ -29,7 +29,7 @@ spec:
         - bash
         - "-c"
         {% if num_gpu %}
-        - "accelerate launch --config_file /mnt/config/training/distributed.yaml launch.py train /mnt/config/training"
+        - "accelerate launch --config_file /mnt/config/training/distributed.yaml launch.py train  /mnt/config/training/config.yaml"
         {% else %}
         - "python launch.py train /mnt/config/training/config.yaml"
         {% endif %}
